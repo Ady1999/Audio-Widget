@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audio Widget</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="panel" id="panel">
+      <section class="card" id="output-card">
+        <header class="card-head">
+          <h2>Sound Output</h2>
+          <span class="hint" id="mirror-hint" hidden></span>
+        </header>
+        <div class="slider-row">
+          <button class="icon-btn" id="output-mute" title="Mute"></button>
+          <input type="range" class="slider" id="output-volume" min="0" max="100" step="1" />
+        </div>
+        <ul class="device-list" id="output-list"></ul>
+      </section>
+
+      <section class="card" id="input-card">
+        <header class="card-head">
+          <h2>Sound Input</h2>
+        </header>
+        <div class="slider-row">
+          <button class="icon-btn" id="input-mute" title="Mute"></button>
+          <input type="range" class="slider" id="input-volume" min="0" max="100" step="1" />
+        </div>
+        <ul class="device-list" id="input-list"></ul>
+      </section>
+
+      <footer class="footer">
+        <button class="link" id="open-settings">Sound Settings…</button>
+        <label class="mini-toggle" title="Start Audio Widget when you sign in">
+          <span>Launch at login</span>
+          <input type="checkbox" id="autostart" />
+          <span class="switch"></span>
+        </label>
+      </footer>
+
+      <p class="error" id="error" hidden></p>
+    </main>
+    <script src="main.js"></script>
+  </body>
+</html>

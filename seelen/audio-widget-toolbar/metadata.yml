@@ -1,0 +1,22 @@
+# Seelen UI toolbar item that opens Audio Widget.
+# Load it with:  slu resource load plugin <path-to-this-folder>
+id: "@ady1999/audio-widget-toolbar"
+
+metadata:
+  displayName: Audio Widget
+  description: Speaker icon that opens the Audio Widget device switcher (outputs, inputs and multi-output).
+  tags:
+    - toolbar
+    - audio
+
+icon: PiSpeakerHighFill
+
+target: "@seelen/fancy-toolbar"
+
+plugin:
+  scopes:
+    - Media
+  template: !include template.js
+  tooltip: !include tooltip.js
+  onClick: |-
+    open("audiowidget://toggle");

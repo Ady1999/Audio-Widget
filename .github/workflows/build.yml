@@ -1,0 +1,44 @@
+name: Build (Windows)
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      - name: Clippy
+        working-directory: src-tauri
+        run: cargo clippy --locked -- -D warnings
+
+      - name: Build installer
+        run: npx tauri build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audio-widget-windows
+          path: |
+            src-tauri/target/release/audio-widget.exe
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi

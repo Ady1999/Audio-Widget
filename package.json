@@ -1,0 +1,14 @@
+{
+  "name": "audio-widget",
+  "private": true,
+  "version": "0.1.0",
+  "description": "macOS Control Center style audio switcher for Windows 11 / Seelen UI",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

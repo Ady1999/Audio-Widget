@@ -10,8 +10,9 @@ A macOS Control Center style floating audio switcher for **Windows 11**, with a 
 - Lists every active **output** and **input** device. Click one to make it the Windows default (for console, multimedia and communications).
 - A macOS-style volume slider and mute button for the current output and input.
 - **Multi-output.** Turn on the switch next to any other output and it plays the same audio as the default device, so you can use 2, 3 or more outputs at once. Each extra output gets its own volume slider. Your choices are saved and come back on restart.
-- Floating, frameless acrylic window that follows the light/dark theme and hides when you click away.
-- Opens from the tray icon, the global shortcut **Ctrl + Alt + A**, the `audiowidget://toggle` link, or the Seelen UI toolbar.
+- **Desktop HUD:** a frameless Mica window that stays on your desktop. Drag it anywhere by its top bar and it remembers the spot. Click the **pin** to keep it above other windows, or **–** to hide it to the tray.
+- Follows the light/dark theme.
+- Shows and hides from the tray icon, the global shortcut **Ctrl + Alt + A**, the `audiowidget://toggle` link, or the Seelen UI toolbar.
 - Optional "Launch at login".
 
 Built with [Tauri 2](https://tauri.app) (Rust + WebView2), the same stack Seelen UI uses. It's small and uses very little memory while idle.
@@ -19,12 +20,12 @@ Built with [Tauri 2](https://tauri.app) (Rust + WebView2), the same stack Seelen
 ## Install
 
 1. Download the latest build: open **Actions → Build (Windows)**, pick the newest run and download `audio-widget-windows`. It contains a setup `.exe` (NSIS, per user), an `.msi` and a portable `audio-widget.exe`.
-2. Run it. A speaker icon appears in the tray and the widget opens.
-3. Optional: in the widget footer, turn on **Launch at login**. At login the app starts hidden in the tray.
+2. Install with the setup `.exe` and run Audio Widget from the Start menu. The HUD appears and a speaker icon is added to the tray.
+3. Optional: in the widget footer, turn on **Launch at login**. The HUD then appears at login on its own, so you don't have to run the file every time.
 
 ## Use with Seelen UI
 
-The app registers the `audiowidget://` URL scheme for your user the first time it runs. The toolbar plugin in [`seelen/audio-widget-toolbar`](seelen/audio-widget-toolbar) adds a speaker icon to the Fancy Toolbar. The icon reflects the volume and mute state, and clicking it opens the widget right under the icon.
+The app registers the `audiowidget://` URL scheme for your user the first time it runs. The toolbar plugin in [`seelen/audio-widget-toolbar`](seelen/audio-widget-toolbar) adds a speaker icon to the Fancy Toolbar. The icon reflects the volume and mute state, and clicking it shows or hides the HUD.
 
 1. Run Audio Widget at least once so the URL scheme is registered.
 2. Load the plugin (Seelen UI must be running):
@@ -79,7 +80,7 @@ npm run build    # build installers into src-tauri/target/release/bundle
 
 - `ui/` is plain HTML, CSS and JS with no bundler. Opening `ui/index.html` in a browser uses a built-in mock backend, which makes styling quick.
 - `src-tauri/src/audio/` holds the audio backend. `win.rs` and `mirror.rs` are the real Windows implementation. `mock.rs` is a fake backend so the app also runs on macOS and Linux for UI work.
-- `src-tauri/src/widget.rs` handles window placement (next to the cursor, clamped to the work area) and hide-on-blur.
+- `src-tauri/src/widget.rs` shows, hides and sizes the HUD and restores its saved position.
 
 ## License
 

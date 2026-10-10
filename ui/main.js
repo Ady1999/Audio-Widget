@@ -61,7 +61,10 @@ async function call(cmd, args) {
 async function refresh() {
   if (interacting) return;
   try {
-    devices = await call("get_devices");
+    const next = await call("get_devices");
+    // Skip DOM work when nothing changed (the common case while polling).
+    if (JSON.stringify(next) === JSON.stringify(devices)) return;
+    devices = next;
     render();
   } catch {
     /* error already shown */
@@ -253,9 +256,6 @@ $("output-mute").onclick = () => toggleMute("output");
 $("input-mute").onclick = () => toggleMute("input");
 $("open-settings").onclick = () => invoke("open_sound_settings").catch(() => {});
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") invoke("hide_widget").catch(() => {});
-});
 document.addEventListener("contextmenu", (e) => e.preventDefault());
 window.addEventListener("pointerup", () => (interacting = false));
 
@@ -269,11 +269,27 @@ autostart.onchange = () =>
     showError(String(e));
   });
 
-if (tauri) tauri.event.listen("widget-shown", refresh);
+const pin = $("pin");
+const showPinned = (on = false) => {
+  pin.classList.toggle("on", on);
+  pin.setAttribute("aria-pressed", on);
+  pin.title = on ? "Unpin (stop staying on top)" : "Pin on top of other windows";
+};
+invoke("is_pinned").then(showPinned).catch(() => {});
+pin.onclick = () => {
+  const on = !pin.classList.contains("on");
+  showPinned(on);
+  call("set_pinned", { pinned: on }).catch(() => showPinned(!on));
+};
+$("hide").onclick = () => invoke("hide_widget").catch(() => {});
+
 window.addEventListener("focus", refresh);
+document.documentElement.addEventListener("mouseenter", refresh);
+// Picks up changes made elsewhere (volume keys, Windows settings).
+// shortcut: polls every 3 s, upgrade to IMMNotificationClient events if this shows up in CPU use.
 setInterval(() => {
-  if (document.hasFocus()) refresh();
-}, 2500);
+  if (!document.hidden) refresh();
+}, 3000);
 refresh();
 
 // ---------------------------------------------------------------------------

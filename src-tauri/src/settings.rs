@@ -8,6 +8,10 @@ use tauri::{AppHandle, Manager};
 pub struct Settings {
     /// Output devices that should also receive the default output's audio.
     pub mirrors: Vec<String>,
+    /// Keep the HUD above other windows.
+    pub pinned: bool,
+    /// Last window position (physical px).
+    pub position: Option<(i32, i32)>,
 }
 
 fn path(app: &AppHandle) -> Option<PathBuf> {

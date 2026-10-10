@@ -78,6 +78,42 @@ h2 {
   font-weight: 600;
 }
 
+/* ---- drag bar ---- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 2px 0 8px;
+  cursor: grab;
+}
+
+.bar-title {
+  flex: 1;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.icon-btn.small {
+  width: 24px;
+  height: 24px;
+  background: none;
+  color: var(--muted);
+}
+
+.icon-btn.small svg {
+  width: 14px;
+  height: 14px;
+}
+
+.icon-btn.small:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+#pin.on {
+  color: var(--accent);
+}
+
 /* ---- volume slider (macOS style pill) ---- */
 .slider-row {
   display: flex;

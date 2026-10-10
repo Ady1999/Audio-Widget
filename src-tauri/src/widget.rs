@@ -62,6 +62,28 @@ pub fn fit_height(app: &AppHandle, logical_height: f64) {
     }
 }
 
+/// Makes the desktop own the window, so "Show desktop" (Win+D) and minimize-all leave
+/// it visible, like a desktop gadget. Pinning on top still works on top of this.
+#[cfg(windows)]
+pub fn attach_to_desktop(w: &WebviewWindow) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        FindWindowW, SetWindowLongPtrW, GWLP_HWNDPARENT,
+    };
+    use windows_core::w;
+    if let (Ok(hwnd), Ok(progman)) = (w.hwnd(), unsafe { FindWindowW(w!("Progman"), None) }) {
+        unsafe {
+            SetWindowLongPtrW(
+                windows::Win32::Foundation::HWND(hwnd.0),
+                GWLP_HWNDPARENT,
+                progman.0 as isize,
+            )
+        };
+    }
+}
+
+#[cfg(not(windows))]
+pub fn attach_to_desktop(_w: &WebviewWindow) {}
+
 /// Windows 11: ask DWM for rounded corners on our undecorated window.
 #[cfg(windows)]
 pub fn round_corners(w: &WebviewWindow) {

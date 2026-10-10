@@ -170,6 +170,36 @@ fn handle_args(app: &AppHandle, args: &[String]) -> bool {
     false
 }
 
+/// True when the launch came from a different exe than the one running, e.g. a newly
+/// installed version while an old portable copy is still in the tray.
+fn is_other_copy(launched: Option<&String>) -> bool {
+    let canonical = |p: std::path::PathBuf| std::fs::canonicalize(p).ok();
+    let launched = launched.and_then(|p| canonical(p.into()));
+    let running = std::env::current_exe().ok().and_then(canonical);
+    launched.is_some() && launched != running
+}
+
+/// Quits this instance and starts the other exe once we're gone (it would otherwise
+/// just hand its launch back to us, since only one instance may run).
+fn hand_over(app: &AppHandle, exe: &str) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        // ping waits ~1 s so our single-instance lock is released before the new copy starts.
+        let _ = std::process::Command::new("cmd")
+            .raw_arg(format!(
+                "/C ping -n 2 127.0.0.1 >nul & start \"\" \"{exe}\""
+            ))
+            .creation_flags(CREATE_NO_WINDOW)
+            .spawn();
+    }
+    #[cfg(not(windows))]
+    let _ = exe;
+    app.state::<AppState>().mirrors.lock().unwrap().stop_all();
+    app.exit(0);
+}
+
 fn restore_mirrors(app: &AppHandle) {
     let saved = app
         .state::<AppState>()
@@ -204,7 +234,7 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
     let menu = Menu::with_items(app, &[&open, &settings, &quit])?;
 
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("Audio Widget")
+        .tooltip(format!("Audio Widget {}", app.package_info().version))
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -239,6 +269,10 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            if is_other_copy(argv.first()) {
+                hand_over(app, &argv[0]);
+                return;
+            }
             if !handle_args(app, &argv) {
                 widget::show(app);
             }
@@ -279,6 +313,7 @@ fn main() {
             setup_tray(handle)?;
             if let Some(w) = app.get_webview_window("main") {
                 widget::round_corners(&w);
+                widget::attach_to_desktop(&w);
                 let _ = w.set_always_on_top(saved.pinned);
                 if let Some(pos) = saved.position {
                     widget::restore_position(&w, pos);

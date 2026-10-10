@@ -1,6 +1,6 @@
 [package]
 name = "audio-widget"
-version = "0.2.1"
+version = "0.2.2"
 description = "A macOS Control Center style floating audio switcher for Windows 11"
 edition = "2021"
 license = "MIT"
@@ -29,6 +29,7 @@ windows = { version = "0.61", features = [
   "Win32_System_Com_StructuredStorage",
   "Win32_System_Variant",
   "Win32_UI_Shell_PropertiesSystem",
+  "Win32_UI_WindowsAndMessaging",
 ] }
 windows-core = "0.61"
 

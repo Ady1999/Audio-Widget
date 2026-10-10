@@ -110,6 +110,12 @@ h2 {
   color: var(--text);
 }
 
+.version {
+  font-weight: 400;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
 #pin.on {
   color: var(--accent);
 }

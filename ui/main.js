@@ -269,6 +269,8 @@ autostart.onchange = () =>
     showError(String(e));
   });
 
+tauri?.app.getVersion().then((v) => ($("version").textContent = `v${v}`));
+
 const pin = $("pin");
 const showPinned = (on = false) => {
   pin.classList.toggle("on", on);

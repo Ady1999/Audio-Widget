@@ -35,13 +35,19 @@
 html,
 body {
   background: var(--bg);
-  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   cursor: default;
 }
 
+html {
+  overflow: clip; /* unlike hidden, focus() can't scroll it */
+}
+
 body {
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
   font: 13px/1.35 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
   color: var(--text);
 }
@@ -85,6 +91,9 @@ h2 {
   gap: 4px;
   padding: 0 2px 0 8px;
   cursor: grab;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .bar-title {
@@ -334,6 +343,7 @@ input:focus-visible + .switch {
 }
 
 .mini-toggle {
+  position: relative; /* keeps its hidden checkbox inside the panel */
   display: flex;
   align-items: center;
   gap: 8px;

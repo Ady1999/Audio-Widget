@@ -41,12 +41,24 @@ pub fn restore_position(w: &WebviewWindow, (x, y): (i32, i32)) {
 /// Resizes the window to fit its content (height in logical px).
 pub fn fit_height(app: &AppHandle, logical_height: f64) {
     let Some(w) = window(app) else { return };
-    let (Ok(scale), Ok(size)) = (w.scale_factor(), w.outer_size()) else {
+    let (Ok(scale), Ok(size)) = (w.scale_factor(), w.inner_size()) else {
         return;
     };
     let height = (logical_height * scale).round() as u32;
-    if height != size.height {
-        let _ = w.set_size(PhysicalSize::new(size.width, height));
+    if height == size.height {
+        return;
+    }
+    let _ = w.set_size(PhysicalSize::new(size.width, height));
+    // Growing must not push the bottom (or the drag bar) off the screen.
+    if let (Ok(Some(m)), Ok(pos), Ok(outer)) =
+        (w.current_monitor(), w.outer_position(), w.outer_size())
+    {
+        let area = m.work_area();
+        let bottom = area.position.y + area.size.height as i32;
+        let y = pos.y.min(bottom - outer.height as i32).max(area.position.y);
+        if y != pos.y {
+            let _ = w.set_position(PhysicalPosition::new(pos.x, y));
+        }
     }
 }
 

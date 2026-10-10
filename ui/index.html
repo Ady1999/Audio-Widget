@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="panel" id="panel">
+    <main class="panel" id="panel" data-tauri-drag-region>
       <header class="bar" data-tauri-drag-region>
         <span class="bar-title" data-tauri-drag-region>Audio <span class="version" id="version" data-tauri-drag-region></span></span>
         <button class="icon-btn small" id="pin" aria-pressed="false" title="Pin on top of other windows">
@@ -17,9 +17,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg>
         </button>
       </header>
-      <section class="card" id="output-card">
-        <header class="card-head">
-          <h2>Sound Output</h2>
+      <section data-tauri-drag-region class="card" id="output-card">
+        <header class="card-head" data-tauri-drag-region>
+          <h2 data-tauri-drag-region>Sound Output</h2>
           <span class="hint" id="mirror-hint" hidden></span>
         </header>
         <div class="slider-row">
@@ -29,9 +29,9 @@
         <ul class="device-list" id="output-list"></ul>
       </section>
 
-      <section class="card" id="input-card">
-        <header class="card-head">
-          <h2>Sound Input</h2>
+      <section data-tauri-drag-region class="card" id="input-card">
+        <header class="card-head" data-tauri-drag-region>
+          <h2 data-tauri-drag-region>Sound Input</h2>
         </header>
         <div class="slider-row">
           <button class="icon-btn" id="input-mute" title="Mute"></button>
@@ -40,7 +40,7 @@
         <ul class="device-list" id="input-list"></ul>
       </section>
 
-      <footer class="footer">
+      <footer class="footer" data-tauri-drag-region>
         <button class="link" id="open-settings">Sound Settings…</button>
         <label class="mini-toggle" title="Start Audio Widget when you sign in">
           <span>Launch at login</span>

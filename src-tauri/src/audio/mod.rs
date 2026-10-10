@@ -24,6 +24,8 @@ pub struct Device {
     pub muted: bool,
     /// True when the default output is also being mirrored to this device.
     pub mirrored: bool,
+    /// Extra delay applied to the mirrored audio (ms).
+    pub delay_ms: u32,
 }
 
 #[cfg(windows)]

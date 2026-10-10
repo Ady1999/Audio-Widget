@@ -19,6 +19,7 @@ fn with_devices<T>(f: impl FnOnce(&mut Vec<Device>) -> T) -> T {
             volume: 0.6,
             muted: false,
             mirrored: false,
+            delay_ms: 0,
         };
         *devices = vec![
             mk("out-1", "Speakers (Realtek(R) Audio)", Flow::Output, true),
@@ -83,12 +84,19 @@ pub fn set_mute(id: &str, muted: bool) -> Result<()> {
     update(id, |d| d.muted = muted)
 }
 
+pub const MAX_DELAY_MS: u32 = 250;
+
 #[derive(Default)]
 pub struct MirrorManager {
     ids: HashSet<String>,
+    pub delays: std::collections::HashMap<String, u32>,
 }
 
 impl MirrorManager {
+    pub fn set_delay(&mut self, id: &str, ms: u32) {
+        self.delays.insert(id.to_string(), ms.min(MAX_DELAY_MS));
+    }
+
     pub fn active_ids(&mut self) -> Vec<String> {
         self.ids.iter().cloned().collect()
     }

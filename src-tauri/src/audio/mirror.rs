@@ -8,11 +8,11 @@
 use std::{
     collections::{HashMap, VecDeque},
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicU32, Ordering},
         mpsc, Arc,
     },
     thread::{self, JoinHandle},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use windows::Win32::{
@@ -30,14 +30,19 @@ use super::win::{device_by_id, enumerator, err, ComGuard, Result};
 const BUFFER_DURATION: i64 = 1_000_000;
 const POLL_INTERVAL: Duration = Duration::from_millis(4);
 
+pub const MAX_DELAY_MS: u32 = 250;
+
 struct Mirror {
     stop: Arc<AtomicBool>,
+    delay_ms: Arc<AtomicU32>,
     handle: JoinHandle<()>,
 }
 
 #[derive(Default)]
 pub struct MirrorManager {
     mirrors: HashMap<String, Mirror>,
+    /// Extra delay per device (ms), kept even while a mirror is off.
+    pub delays: HashMap<String, u32>,
 }
 
 impl MirrorManager {
@@ -45,6 +50,14 @@ impl MirrorManager {
     pub fn active_ids(&mut self) -> Vec<String> {
         self.mirrors.retain(|_, m| !m.handle.is_finished());
         self.mirrors.keys().cloned().collect()
+    }
+
+    pub fn set_delay(&mut self, id: &str, ms: u32) {
+        let ms = ms.min(MAX_DELAY_MS);
+        self.delays.insert(id.to_string(), ms);
+        if let Some(m) = self.mirrors.get(id) {
+            m.delay_ms.store(ms, Ordering::Relaxed);
+        }
     }
 
     pub fn set(&mut self, id: &str, enabled: bool) -> Result<()> {
@@ -57,13 +70,15 @@ impl MirrorManager {
         }
 
         let stop = Arc::new(AtomicBool::new(false));
+        let delay_ms = Arc::new(AtomicU32::new(self.delays.get(id).copied().unwrap_or(0)));
+        let thread_delay = delay_ms.clone();
         let (ready_tx, ready_rx) = mpsc::channel();
         let target = id.to_string();
         let thread_stop = stop.clone();
         let handle = thread::Builder::new()
             .name(format!("mirror-{id}"))
             .spawn(move || {
-                if let Err(e) = run(&target, &thread_stop, &ready_tx) {
+                if let Err(e) = run(&target, &thread_stop, &thread_delay, &ready_tx) {
                     let _ = ready_tx.send(Err(e.clone()));
                     eprintln!("mirror to {target} stopped: {e}");
                 }
@@ -72,7 +87,14 @@ impl MirrorManager {
 
         match ready_rx.recv_timeout(Duration::from_secs(3)) {
             Ok(Ok(())) => {
-                self.mirrors.insert(id.to_string(), Mirror { stop, handle });
+                self.mirrors.insert(
+                    id.to_string(),
+                    Mirror {
+                        stop,
+                        delay_ms,
+                        handle,
+                    },
+                );
                 Ok(())
             }
             Ok(Err(e)) => Err(e),
@@ -111,7 +133,12 @@ impl Drop for MirrorManager {
     }
 }
 
-fn run(target_id: &str, stop: &AtomicBool, ready: &mpsc::Sender<Result<()>>) -> Result<()> {
+fn run(
+    target_id: &str,
+    stop: &AtomicBool,
+    delay_ms: &AtomicU32,
+    ready: &mpsc::Sender<Result<()>>,
+) -> Result<()> {
     let _com = ComGuard::new();
     let en = enumerator()?;
 
@@ -159,14 +186,21 @@ fn run(target_id: &str, stop: &AtomicBool, ready: &mpsc::Sender<Result<()>>) -> 
         render_client.Start().map_err(err)?;
         let _ = ready.send(Ok(()));
 
-        // Keep at most ~60 ms queued; beyond that we drop the oldest audio so the
-        // mirrored device never drifts noticeably behind the primary one.
-        let max_queued = (bytes_per_sec * 60 / 1000) / block_align * block_align;
+        let ms_to_bytes = |ms: usize| (bytes_per_sec * ms / 1000) / block_align * block_align;
+        // Beyond the user's delay keep at most ~60 ms queued; older audio is dropped so
+        // the mirrored device never drifts noticeably behind the primary one.
+        let slack = ms_to_bytes(60);
         let mut queue: VecDeque<u8> = VecDeque::with_capacity(bytes_per_sec / 2);
+        let (mut last_packet, mut last_tick) = (Instant::now(), Instant::now());
 
         let result = (|| -> Result<()> {
             while !stop.load(Ordering::Relaxed) {
+                let delay = ms_to_bytes(delay_ms.load(Ordering::Relaxed) as usize);
+                let tick = last_tick.elapsed();
+                last_tick = Instant::now();
+
                 while capture.GetNextPacketSize().map_err(err)? > 0 {
+                    last_packet = Instant::now();
                     let mut data = std::ptr::null_mut();
                     let mut frames = 0u32;
                     let mut flags = 0u32;
@@ -182,13 +216,21 @@ fn run(target_id: &str, stop: &AtomicBool, ready: &mpsc::Sender<Result<()>>) -> 
                     capture.ReleaseBuffer(frames).map_err(err)?;
                 }
 
-                if queue.len() > max_queued {
-                    let excess = queue.len() - max_queued / 2;
+                // Loopback sends nothing while the PC is silent. Feed silence then, so the
+                // held-back tail still plays on time instead of when sound resumes.
+                if delay > 0 && last_packet.elapsed() > Duration::from_millis(30) {
+                    let len = ms_to_bytes(tick.as_millis() as usize);
+                    queue.extend(std::iter::repeat_n(0u8, len));
+                }
+
+                if queue.len() > delay + slack {
+                    let excess = queue.len() - delay - slack / 2;
                     queue.drain(..excess - excess % block_align);
                 }
 
                 let padding = render_client.GetCurrentPadding().map_err(err)? as usize;
-                let frames = (render_frames - padding).min(queue.len() / block_align);
+                let ready = queue.len().saturating_sub(delay);
+                let frames = (render_frames - padding).min(ready / block_align);
                 if frames > 0 {
                     let buffer = render.GetBuffer(frames as u32).map_err(err)?;
                     let out = std::slice::from_raw_parts_mut(buffer, frames * block_align);

@@ -107,6 +107,9 @@ function bindSlider(slider, getId) {
   };
 }
 
+const label = (text) => Object.assign(document.createElement("span"), { textContent: text });
+const delayText = (ms) => `Delay ${Number(ms) ? `+${ms}` : 0} ms`;
+
 function renderMaster(flow) {
   const device = devices.find((d) => d.flow === flow && d.isDefault);
   const slider = $(`${flow}-volume`);
@@ -182,8 +185,35 @@ function renderList(flow) {
       setSliderFill(slider);
       bindSlider(slider, () => device.id);
       slider.onclick = (e) => e.stopPropagation();
-      sub.append("Also playing", slider);
-      li.append(sub);
+      sub.append(label("Also playing"), slider);
+
+      // Holds this output back to line it up with a slower one (e.g. Bluetooth as main).
+      const delaySub = document.createElement("div");
+      delaySub.className = "sub";
+      const delayLabel = label(delayText(device.delayMs));
+      const delay = document.createElement("input");
+      delay.type = "range";
+      delay.className = "slider small";
+      delay.min = 0;
+      delay.max = 250;
+      delay.step = 5;
+      delay.value = device.delayMs;
+      delay.title = "Delay this output to sync it with the main one";
+      const fill = () => delay.style.setProperty("--value", `${(delay.value / 250) * 100}%`);
+      fill();
+      delay.onclick = (e) => e.stopPropagation();
+      delay.oninput = () => {
+        interacting = true;
+        fill();
+        delayLabel.textContent = delayText(delay.value);
+      };
+      delay.onchange = () => {
+        interacting = false;
+        device.delayMs = Number(delay.value);
+        call("set_delay", { id: device.id, ms: device.delayMs }).catch(() => {});
+      };
+      delaySub.append(delayLabel, delay);
+      li.append(sub, delaySub);
     }
 
     li.onclick = () => {
@@ -316,7 +346,7 @@ refresh();
 function mockInvoke(cmd, args = {}) {
   const db = (mockInvoke.db ??= [
     { id: "o1", name: "Speakers (Realtek(R) Audio)", flow: "output", isDefault: true, volume: 0.62, muted: false, mirrored: false },
-    { id: "o2", name: "Headphones (WH-1000XM5)", flow: "output", isDefault: false, volume: 0.4, muted: false, mirrored: true },
+    { id: "o2", name: "Headphones (WH-1000XM5)", flow: "output", isDefault: false, volume: 0.4, muted: false, mirrored: true, delayMs: 120 },
     { id: "o3", name: "LG HDR 4K (NVIDIA High Definition Audio)", flow: "output", isDefault: false, volume: 0.8, muted: false, mirrored: false },
     { id: "i1", name: "Microphone Array (Realtek(R) Audio)", flow: "input", isDefault: true, volume: 0.75, muted: false, mirrored: false },
     { id: "i2", name: "Headset Microphone (WH-1000XM5)", flow: "input", isDefault: false, volume: 0.5, muted: false, mirrored: false },
@@ -334,6 +364,9 @@ function mockInvoke(cmd, args = {}) {
       return Promise.resolve();
     case "set_volume":
       find(args.id).volume = args.volume;
+      return Promise.resolve();
+    case "set_delay":
+      find(args.id).delayMs = args.ms;
       return Promise.resolve();
     case "set_mute":
       find(args.id).muted = args.muted;

@@ -33,9 +33,13 @@ fn default_output(devices: &[Device]) -> Option<String> {
 }
 
 fn persist_mirrors(app: &AppHandle, state: &AppState) {
-    let mirrors = state.mirrors.lock().unwrap().active_ids();
+    let (mirrors, delays) = {
+        let mut m = state.mirrors.lock().unwrap();
+        (m.active_ids(), m.delays.clone())
+    };
     let mut s = state.settings.lock().unwrap();
     s.mirrors = mirrors;
+    s.delays = delays;
     settings::save(app, &s);
 }
 
@@ -61,9 +65,11 @@ async fn get_devices(app: AppHandle, state: State<'_, AppState>) -> Result<Vec<D
         persist_mirrors(&app, &state);
     }
 
-    let mirrored = state.mirrors.lock().unwrap().active_ids();
+    let mut mirrors = state.mirrors.lock().unwrap();
+    let mirrored = mirrors.active_ids();
     for d in &mut devices {
         d.mirrored = mirrored.contains(&d.id);
+        d.delay_ms = mirrors.delays.get(&d.id).copied().unwrap_or(0);
     }
     Ok(devices)
 }
@@ -104,6 +110,18 @@ async fn set_mirror(
     let result = state.mirrors.lock().unwrap().set(&id, enabled);
     persist_mirrors(&app, &state);
     result
+}
+
+#[tauri::command]
+async fn set_delay(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    ms: u32,
+) -> Result<(), String> {
+    state.mirrors.lock().unwrap().set_delay(&id, ms);
+    persist_mirrors(&app, &state);
+    Ok(())
 }
 
 #[tauri::command]
@@ -319,7 +337,10 @@ fn main() {
                     widget::restore_position(&w, pos);
                 }
             }
+            let mut mirrors = MirrorManager::default();
+            mirrors.delays = saved.delays.clone();
             app.manage(AppState {
+                mirrors: Mutex::new(mirrors),
                 settings: Mutex::new(saved),
                 ..Default::default()
             });
@@ -347,6 +368,7 @@ fn main() {
             set_volume,
             set_mute,
             set_mirror,
+            set_delay,
             resize_widget,
             hide_widget,
             is_pinned,

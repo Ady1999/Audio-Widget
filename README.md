@@ -69,6 +69,7 @@ onClick: 'open("audiowidget://toggle")'
 Notes on multi-output:
 
 - Extra outputs lag the default device by roughly 20–60 ms. That's fine for music and video. For tight sync, use a hardware or driver feature such as Realtek "multi-stream" or Voicemeeter.
+- **Delay slider (0–250 ms) on each extra output.** Bluetooth runs about 150–250 ms behind wired speakers. To sync them, make the Bluetooth device the main output, add the speakers as extra outputs, and raise their delay until they line up. Windows doesn't let an app delay the main output, and nothing can play early, so there's no negative delay. The value is saved per device.
 - If the default output changes, from the widget or from Windows, the mirrors reconnect to the new default automatically.
 - A device can't mirror itself. When you make a mirrored device the default, its mirror is turned off.
 

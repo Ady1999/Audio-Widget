@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
@@ -8,6 +8,8 @@ use tauri::{AppHandle, Manager};
 pub struct Settings {
     /// Output devices that should also receive the default output's audio.
     pub mirrors: Vec<String>,
+    /// Extra delay (ms) per mirrored output, to line it up with a slower device.
+    pub delays: HashMap<String, u32>,
     /// Keep the HUD above other windows.
     pub pinned: bool,
     /// Last window position (physical px).

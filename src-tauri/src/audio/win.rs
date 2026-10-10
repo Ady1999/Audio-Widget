@@ -107,6 +107,7 @@ fn collect(
             volume,
             muted,
             mirrored: false,
+            delay_ms: 0,
         });
     }
     Ok(())

@@ -277,6 +277,10 @@ h2 {
   text-overflow: ellipsis;
 }
 
+.device .sub span {
+  min-width: 78px;
+}
+
 .device .sub {
   grid-column: 2 / 4;
   display: flex;

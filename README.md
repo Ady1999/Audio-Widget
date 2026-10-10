@@ -19,7 +19,7 @@ Built with [Tauri 2](https://tauri.app) (Rust + WebView2), the same stack Seelen
 
 ## Install
 
-1. Download the latest build: open **Actions → Build (Windows)**, pick the newest run and download `audio-widget-windows`. It contains a setup `.exe` (NSIS, per user), an `.msi` and a portable `audio-widget.exe`.
+1. Download the newest version from **Releases** on the right side of the repo page. The one marked **Latest** has the newest changes, with the version and build number in its name. Each release has a setup `.exe` (recommended, per user), an `.msi` and a portable `.exe`.
 2. Install with the setup `.exe` and run Audio Widget from the Start menu. The HUD appears and a speaker icon is added to the tray.
 3. Optional: in the widget footer, turn on **Launch at login**. The HUD then appears at login on its own, so you don't have to run the file every time.
 

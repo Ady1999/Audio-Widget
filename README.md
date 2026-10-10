@@ -11,6 +11,10 @@ A macOS Control Center style floating audio switcher for **Windows 11**, with a 
 - A macOS-style volume slider and mute button for the current output and input.
 - **Multi-output.** Turn on the switch next to any other output and it plays the same audio as the default device, so you can use 2, 3 or more outputs at once. Each extra output gets its own volume slider. Your choices are saved and come back on restart.
 - **Desktop HUD:** a frameless Mica window that stays on your desktop. Drag it anywhere by its top bar and it remembers the spot. Click the **pin** to keep it above other windows, or **–** to hide it to the tray.
+- **Collapse to a tile:** the ⌃ button in the top bar shrinks the HUD to just the current output and its volume slider. Click it again to expand. It remembers which way you left it.
+
+  <img src="docs/screenshot-tile.png" width="300" alt="Collapsed tile" />
+
 - Follows the light/dark theme.
 - Shows and hides from the tray icon, the global shortcut **Ctrl + Alt + A**, the `audiowidget://toggle` link, or the Seelen UI toolbar.
 - Optional "Launch at login".

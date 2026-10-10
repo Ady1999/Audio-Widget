@@ -125,6 +125,32 @@ h2 {
   margin-left: 4px;
 }
 
+/* ---- collapsed tile ---- */
+.current {
+  display: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.collapsed :is(#input-card, .device-list, .footer, .hint, .card-head h2, .version) {
+  display: none;
+}
+
+.collapsed .current {
+  display: block;
+}
+
+#collapse svg {
+  transition: transform 0.15s;
+}
+
+.collapsed #collapse svg {
+  transform: rotate(180deg);
+}
+
 #pin.on {
   color: var(--accent);
 }

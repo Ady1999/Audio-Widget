@@ -122,6 +122,7 @@ function renderMaster(flow) {
   mute.classList.toggle("muted", !!muted);
   mute.innerHTML = isOut ? (muted ? ICONS.speakerMuted : ICONS.speaker) : muted ? ICONS.micMuted : ICONS.mic;
   mute.title = muted ? "Unmute" : "Mute";
+  if (isOut) $("output-current").textContent = device?.name ?? "";
 }
 
 function renderList(flow) {
@@ -283,6 +284,21 @@ pin.onclick = () => {
   showPinned(on);
   call("set_pinned", { pinned: on }).catch(() => showPinned(!on));
 };
+// Collapsed tile: only the current output and its volume. Remembered per machine.
+const collapse = $("collapse");
+const setCollapsed = (on) => {
+  document.body.classList.toggle("collapsed", on);
+  collapse.setAttribute("aria-pressed", on);
+  collapse.title = on ? "Expand" : "Collapse to a small tile";
+  try {
+    localStorage.setItem("collapsed", on ? "1" : "");
+  } catch {}
+  fitWindow();
+};
+try {
+  setCollapsed(localStorage.getItem("collapsed") === "1");
+} catch {}
+collapse.onclick = () => setCollapsed(!document.body.classList.contains("collapsed"));
 $("hide").onclick = () => invoke("hide_widget").catch(() => {});
 
 window.addEventListener("focus", refresh);

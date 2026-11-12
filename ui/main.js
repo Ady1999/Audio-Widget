@@ -72,7 +72,7 @@ async function refresh() {
 }
 
 function setSliderFill(slider) {
-  slider.style.setProperty("--value", `${slider.value}%`);
+  slider.style.setProperty("--p", slider.value / 100);
 }
 
 /** Throttled volume setter so dragging doesn't flood the backend. */
@@ -199,7 +199,7 @@ function renderList(flow) {
       delay.step = 5;
       delay.value = device.delayMs;
       delay.title = "Delay this output to sync it with the main one";
-      const fill = () => delay.style.setProperty("--value", `${(delay.value / 250) * 100}%`);
+      const fill = () => delay.style.setProperty("--p", delay.value / 250);
       fill();
       delay.onclick = (e) => e.stopPropagation();
       delay.oninput = () => {
